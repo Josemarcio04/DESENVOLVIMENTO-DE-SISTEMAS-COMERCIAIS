@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Protótipo – Sistema gerenciador para bibliotecas</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f1f4f8;--card:#fff;--ink:#14263d;--mut:#5b6b80;--line:#d5dce6;--nav:#1b3a5c;--navink:#dfe8f3;--acc:#0f766e;--accink:#fff;--err:#b42318;--ok:#067647}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1621;--card:#16222f;--ink:#e6edf5;--mut:#9aaabc;--line:#2a3a4d;--nav:#0a111a;--acc:#2bb3a6;--accink:#06201d;--err:#ff8a80;--ok:#6ee7a8}}
+:root[data-theme="dark"]{--bg:#0e1621;--card:#16222f;--ink:#e6edf5;--mut:#9aaabc;--line:#2a3a4d;--nav:#0a111a;--acc:#2bb3a6;--accink:#06201d;--err:#ff8a80;--ok:#6ee7a8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;margin:0 0 .5rem}h1{font-size:1.6rem}h2{font-size:1.3rem}
+.app{display:flex;min-height:100vh}
+nav{width:230px;background:var(--nav);color:var(--navink);padding:1rem .6rem;flex-shrink:0}
+nav .brand{font-family:Georgia,serif;font-size:1.15rem;padding:.2rem .6rem 1rem;color:#fff}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;padding:.6rem .7rem;border-radius:6px;font:inherit;cursor:pointer}
+nav button:hover,nav button.on{background:rgba(255,255,255,.14);color:#fff}
+nav .who{font-size:.8rem;opacity:.75;padding:.8rem .7rem 0}
+main{flex:1;padding:1.5rem;min-width:0;max-width:960px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1.1rem;margin-bottom:1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem}
+.opt{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.opt:hover{border-color:var(--acc)}.opt b{display:block;font-family:Georgia,serif;font-size:1.05rem}.opt span{color:var(--mut);font-size:.85rem}
+label{display:block;font-weight:600;margin:.7rem 0 .25rem}
+input{width:100%;padding:.6rem .7rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.btn{background:var(--acc);color:var(--accink);border:0;border-radius:6px;padding:.6rem 1.1rem;font:inherit;font-weight:600;cursor:pointer}
+.btn.sec{background:none;color:var(--ink);border:1px solid var(--line)}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
+.msg{padding:.7rem .9rem;border-radius:6px;margin:.8rem 0;border:1px solid}
+.msg.err{color:var(--err);border-color:var(--err)}.msg.ok{color:var(--ok);border-color:var(--ok)}.msg.info{color:var(--mut);border-color:var(--line)}
+.steps{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap}.steps span{padding:.25rem .7rem;border-radius:99px;border:1px solid var(--line);color:var(--mut);font-size:.85rem}.steps .on{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:.55rem .5rem;border-bottom:1px solid var(--line);vertical-align:middle}th{color:var(--mut);font-weight:600;font-size:.85rem}
+.tbl{overflow-x:auto}
+.tag{font-size:.78rem;padding:.1rem .5rem;border-radius:99px;border:1px solid var(--line)}
+.recibo{border:1px dashed var(--mut);padding:1rem;border-radius:6px;font-family:ui-monospace,Menlo,monospace;font-size:.88rem}
+.login{max-width:400px;margin:8vh auto;padding:0 1rem}
+.link{background:none;border:0;color:var(--mut);cursor:pointer;font:inherit;text-decoration:underline;padding:0}
+@media(max-width:700px){.app{flex-direction:column}nav{width:100%;display:flex;overflow-x:auto;padding:.5rem;gap:.2rem;align-items:center}nav .brand,nav .who{display:none}nav button{width:auto;white-space:nowrap}}
+</style></head><body><div id="root"></div>
+<script>
+const MENUS={
+ admin:['Início','Gerenciar funcionalidades','Buscar / Reservar','Circulação','Entrada','Edição','Relatórios','Regulamentos','Alterar senha','Sair'],
+ func:['Início','Buscar / Reservar','Circulação','Entrada','Edição','Relatórios','Regulamentos','Alterar senha','Sair'],
+ comum:['Buscar / Reservar','Extrato','Regulamentos','Sugestões','Alterar senha','Sair']};
+const NOMES={admin:'Administrador',func:'Funcionário',comum:'Usuário comum'};
+const LIVROS=[{t:'Dom Casmurro',a:'Machado de Assis',isbn:'978-85-359-0277-5',d:2},{t:'Memórias Póstumas de Brás Cubas',a:'Machado de Assis',isbn:'978-85-359-0278-2',d:0},{t:'Grande Sertão: Veredas',a:'Guimarães Rosa',isbn:'978-85-209-3132-1',d:1}];
+let S={role:null,page:'Início',step:1,msg:null,q:'',found:null,count:0};
+const $=id=>document.getElementById(id);
+const alertMsg=(t,c)=>`<div class="msg ${c}" role="status">${t}</div>`;
+function go(p){S.page=p;S.step=1;S.msg=null;S.found=null;S.q='';S.count=0;render()}
+function cancel(){S.step=1;S.msg=alertMsg('Operação cancelada.','info');if(S.page==='Circulação')S.page='Circulação';render()}
+
+function login(){return `<div class="login card"><h1>Biblioteca Central</h1><p style="color:var(--mut)">Entre para acessar o sistema.</p>
+<label for="lg">Login</label><input id="lg" autocomplete="off" placeholder="ex.: maria.silva">
+<label for="pw">Senha</label><input id="pw" type="password" placeholder="••••••••">
+<div id="lm">${S.msg||''}</div>
+<div class="row"><button class="btn" onclick="doLogin()">Entrar</button></div>
+<p style="color:var(--mut);font-size:.85rem;margin-top:1.2rem">Protótipo: escolha o perfil para entrar direto</p>
+<div class="row" style="margin-top:.4rem"><button class="btn sec" onclick="enter('admin')">Administrador</button><button class="btn sec" onclick="enter('func')">Funcionário</button><button class="btn sec" onclick="enter('comum')">Usuário comum</button></div></div>`}
+function doLogin(){if(!$('lg').value||!$('pw').value){S.msg=alertMsg('Informe login e senha para continuar.','err');render()}else enter('func')}
+function enter(r){S.role=r;S.msg=null;go(r==='comum'?'Buscar / Reservar':'Início')}
+
+function inicio(){return `<h1>Início</h1><p style="color:var(--mut)">Atalhos para as tarefas mais comuns.</p><div class="grid">
+<button class="opt" onclick="go('Circulação')"><b>Circulação</b><span>Empréstimos, devoluções e consultas locais</span></button>
+<button class="opt" onclick="go('Buscar / Reservar')"><b>Buscar / Reservar</b><span>Encontrar títulos e reservar</span></button>
+<button class="opt" onclick="go('Entrada')"><b>Entrada</b><span>Cadastrar usuários e títulos</span></button>
+<button class="opt" onclick="go('Regulamentos')"><b>Regulamentos</b><span>Normas da biblioteca</span></button></div>`}
+
+function buscar(){
+ const rows=(S.found||[]).map((l,i)=>`<tr><td><input type="checkbox" aria-label="Selecionar"></td><td><b>${l.t}</b><br><span style="color:var(--mut)">${l.a}</span></td><td>${l.d?`<span class="tag">${l.d} disponível(is)</span>`:'<span class="tag">Todos emprestados</span>'}</td><td><button class="btn sec" onclick="alert('Status do título: ISBN ${l.isbn}, ${l.d} exemplar(es) disponível(is).')">Status</button> <button class="btn" onclick="reservar(${i})">Reservar</button></td></tr>`).join('');
+ return `<h1>Buscar / Reservar</h1>${S.msg||''}<div class="card"><label for="q">Título do material</label>
+<div class="row" style="margin-top:0"><input id="q" style="flex:1;min-width:200px" value="${S.q}" placeholder="ex.: Dom Casmurro"><button class="btn sec">Preferências</button><button class="btn" onclick="buscarGo()">Buscar</button></div></div>
+${S.found&&S.found.length?`<div class="card tbl"><table><tr><th></th><th>Título</th><th>Situação</th><th></th></tr>${rows}</table><div class="row"><button class="btn sec" onclick="go('Buscar / Reservar')">Finalizar</button><button class="btn sec" onclick="alert('Imprimindo dados dos títulos selecionados…')">Imprimir seleções</button></div></div>`:''}`}
+function buscarGo(){const q=$('q').value.trim();S.q=q;
+ if(!q){S.msg=alertMsg('Digite um título para buscar.','err');S.found=null}
+ else{const f=LIVROS.filter(l=>l.t.toLowerCase().includes(q.toLowerCase()));S.found=f;S.msg=f.length?null:alertMsg('Nenhum título encontrado para “'+q+'”.','info')}
+ render()}
+function reservar(i){const l=S.found[i];
+ if(l.d){S.msg=alertMsg('Não é possível reservar: há exemplar disponível. Faça o empréstimo no balcão.','err')}
+ else{S.msg=alertMsg('Reserva de “'+l.t+'” registrada com sucesso.','ok')}
+ render()}
+
+function circ(){
+ if(S.step===1)return `<h1>Circulação</h1>${S.msg||''}<div class="grid">
+<button class="opt" onclick="S.step=2;S.msg=null;render()"><b>Empréstimo</b><span>Emprestar exemplares a um usuário</span></button>
+<button class="opt" onclick="go('Devolução')"><b>Devolução</b><span>Receber exemplares</span></button>
+<button class="opt" onclick="go('Consulta local')"><b>Consulta local</b><span>Uso dentro da biblioteca</span></button>
+<button class="opt" onclick="go('Histórico')"><b>Histórico</b><span>Ações de usuários e exemplares</span></button>
+<button class="opt" onclick="go('Extrato')"><b>Extrato</b><span>Empréstimos, reservas e multas</span></button></div>`;
+ const st=`<div class="steps"><span class="${S.step==2?'on':''}">Identificar usuário</span><span class="${S.step==3?'on':''}">Confirmar</span><span class="${S.step==4?'on':''}">Comprovante</span></div>`;
+ if(S.step===2){const first=S.count===0;return `<h1>Novo empréstimo</h1>${st}${S.msg||''}<div class="card">
+${first?`<p style="color:var(--mut);margin-top:0">O usuário digita as próprias credenciais.</p><label for="ul">Login do usuário</label><input id="ul" placeholder="ex.: joao.pereira"><label for="up">Senha do usuário</label><input id="up" type="password">`:`<p style="margin-top:0">Usuário identificado: <b>João Pereira</b></p>`}
+<label for="ex">Código do exemplar</label><input id="ex" placeholder="ex.: EX-0042">
+<div class="row"><button class="btn" onclick="emp2(${first})">Continuar</button><button class="btn sec" onclick="cancel()">Cancelar</button></div></div>`}
+ if(S.step===3)return `<h1>Confirmar empréstimo</h1>${st}<div class="card"><table><tr><th>Usuário</th><td>João Pereira (maria.silva atendendo)</td></tr><tr><th>Exemplar</th><td>${S.ex} – Dom Casmurro</td></tr><tr><th>Devolução prevista</th><td>${prazo()}</td></tr><tr><th>Multas pendentes</th><td>Nenhuma</td></tr></table>
+<div class="row"><button class="btn" onclick="S.step=4;S.count++;render()">Confirmar empréstimo</button><button class="btn sec" onclick="cancel()">Cancelar</button></div></div>`;
+ return `<h1>Comprovante</h1>${st}${alertMsg('Empréstimo registrado com sucesso.','ok')}<div class="card"><div class="recibo">BIBLIOTECA CENTRAL – COMPROVANTE DE EMPRÉSTIMO<br>Usuário: João Pereira<br>Exemplar: ${S.ex} – Dom Casmurro<br>Data: ${new Date().toLocaleDateString('pt-BR')}<br>Devolução prevista: ${prazo()}<br>Itens nesta sessão: ${S.count}</div>
+<div class="row"><button class="btn" onclick="go('Circulação')">Finalizar</button><button class="btn sec" onclick="alert('Imprimindo comprovante…')">Imprimir</button><button class="btn sec" onclick="S.step=2;S.msg=null;render()">Continuar</button></div></div>`}
+function prazo(){const d=new Date();d.setDate(d.getDate()+7);return d.toLocaleDateString('pt-BR')}
+function emp2(first){const ex=$('ex').value.trim();
+ if(first&&(!$('ul').value||!$('up').value)){S.msg=alertMsg('Informe o login e a senha do usuário.','err');return render()}
+ if(!ex){S.msg=alertMsg('Informe o código do exemplar.','err');return render()}
+ if(ex.toUpperCase()==='EX-0000'){S.msg=alertMsg('Exemplar não encontrado.','info');return render()}
+ S.ex=ex.toUpperCase();S.msg=null;S.step=3;render()}
+
+function extrato(){return `<h1>Extrato</h1><div class="card tbl"><table><tr><th>Material</th><th>Situação</th><th>Vencimento</th><th></th></tr>
+<tr><td>Dom Casmurro</td><td><span class="tag">Emprestado</span></td><td>09/10/2026</td><td><button class="btn" onclick="alert('Renovação registrada. Novo vencimento: 16/10/2026')">Renovar</button></td></tr>
+<tr><td>Grande Sertão: Veredas</td><td><span class="tag">Reservado</span></td><td>–</td><td><button class="btn sec" onclick="this.closest('tr').remove()">Eliminar reserva</button></td></tr></table>
+<p style="color:var(--mut)">Multas pendentes: R$ 0,00</p><div class="row"><button class="btn" onclick="go('Início')">Finalizar</button><button class="btn sec" onclick="alert('Imprimindo extrato…')">Imprimir</button></div></div>`}
+
+function senha(){return `<h1>Alterar senha</h1>${S.msg||''}<div class="card"><label for="s1">Senha atual</label><input id="s1" type="password"><label for="s2">Nova senha</label><input id="s2" type="password"><label for="s3">Confirmar nova senha</label><input id="s3" type="password">
+<div class="row"><button class="btn" onclick="trocar()">Alterar senha</button><button class="btn sec" onclick="cancel()">Cancelar</button></div></div>`}
+function trocar(){const a=$('s1').value,b=$('s2').value,c=$('s3').value;
+ S.msg=!a||!b?alertMsg('Preencha todos os campos.','err'):b!==c?alertMsg('A confirmação é diferente da nova senha.','err'):alertMsg('Senha alterada com sucesso.','ok');render()}
+
+function generico(p){return `<h1>${p}</h1><div class="msg info">Tela fora do escopo deste protótipo. Fluxo principal: <b>Circulação → Empréstimo</b>.</div>`}
+
+function render(){
+ if(!S.role){$('root').innerHTML=login();return}
+ const m=MENUS[S.role];
+ const nav=`<nav><div class="brand">Biblioteca Central</div>${m.map(i=>`<button class="${i===S.page?'on':''}" onclick="${i==='Sair'?'sair()':`go('${i}')`}">${i}</button>`).join('')}<div class="who">Perfil: ${NOMES[S.role]}</div></nav>`;
+ const P=S.page;
+ const body=P==='Início'?inicio():P==='Buscar / Reservar'?buscar():P==='Circulação'?circ():P==='Extrato'?extrato():P==='Alterar senha'?senha():generico(P);
+ $('root').innerHTML=`<div class="app">${nav}<main>${body}</main></div>`}
+function sair(){if(confirm('Deseja encerrar a sessão?')){S={role:null,page:'Início',step:1,msg:null,q:'',found:null,count:0};render()}}
+render();
+</script></body></html>
